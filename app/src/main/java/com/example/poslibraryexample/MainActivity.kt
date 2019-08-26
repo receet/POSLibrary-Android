@@ -19,9 +19,9 @@ import java.util.*
         sendOrder.isEnabled = posManager.isEnabled
         resetAuthKey.isEnabled = posManager.isEnabled
         isEnabled.setOnCheckedChangeListener { _, isChecked ->
-            posManager.isEnabled = isChecked
-            resetAuthKey.isEnabled = isChecked
-            sendOrder.isEnabled = isChecked
+                posManager.isEnabled = isChecked
+                resetAuthKey.isEnabled = isChecked
+                sendOrder.isEnabled = isChecked
         }
 
     }

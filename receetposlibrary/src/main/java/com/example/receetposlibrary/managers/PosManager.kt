@@ -31,64 +31,74 @@ import com.example.receetposlibrary.SharedPreference
 import com.example.receetposlibrary.SingletonHolder
 
 
-class PosManager(private val context: Context) : ConnectionManagerActionsInterface, VirtualBeaconActionsInterface,
+class PosManager(private val context: Context) : ConnectionManagerActionsInterface,
+    VirtualBeaconActionsInterface,
     PopUpViewActionsInterface {
 
     private val sharedPreference: SharedPreference = SharedPreference(context)
-    private var connectionManager : ConnectionManager = ConnectionManager(context)
-    private var virtualBeaconManager  = VirtualBeaconManager.getInstance(context)
+    private var connectionManager: ConnectionManager = ConnectionManager(context)
+    private var virtualBeaconManager = VirtualBeaconManager.getInstance(context)
     private var digitalOrder: JSONObject = JSONObject()
-    private var timer : CountDownTimer? = null
-    private var popUpDialog : Dialog? = null
+    private var timer: CountDownTimer? = null
+    private var popUpDialog: Dialog? = null
     private val requestCodeBluetoothOn = 1313
 
     companion object : SingletonHolder<PosManager, Context>(::PosManager)
 
-     public var isEnabled: Boolean = false
+    public var isEnabled: Boolean = false
         set(value) {
             field = value
             sharedPreference.save(RECEET_INTEGRATION_KEY, isEnabled)
-            if (value){
+            if (value) {
                 if (sharedPreference.getValueString(AUTHORIZATION_CODE_KEY) == null)
                     showAuthCodeAlert(AUTH_PROMPT_TITLE, AUTH_PROMPT_MESSAGE)
-            }}
+            }
+        }
 
 
     init {
-        isEnabled = sharedPreference.getValueBoolien(RECEET_INTEGRATION_KEY,false)
+        isEnabled = sharedPreference.getValueBoolien(RECEET_INTEGRATION_KEY, false)
         virtualBeaconManager.getVirtualBeaconActionsInterface(this)
         connectionManager.getConnectionManagerActionsInterface(this)
     }
 
-    fun createOrder(order : JSONObject) {
-        if(isNetworkAvailable()) {
-            if((BluetoothManager().isBluetoothSupported) && (!BluetoothManager().isBluetoothEnabled)) {
+    fun createOrder(order: JSONObject) {
+        if (isNetworkAvailable()) {
+            if ((BluetoothManager().isBluetoothSupported) && (!BluetoothManager().isBluetoothEnabled)) {
                 turnOnBluetooth(context as Activity)
+            } else {
+                if (sharedPreference.getValueString(AUTHORIZATION_CODE_KEY) == null) showAuthCodeAlert(
+                    AUTH_PROMPT_TITLE,
+                    AUTH_PROMPT_MESSAGE
+                )
+                else {
+                    digitalOrder = order
+                    connectionManager.connectToWebSocket()
+                }
             }
-            else {
-                digitalOrder = order
-                connectionManager.connectToWebSocket()
-            }
-        }
-        else {
-            connectionManagerDidEncounterError("No internet connection",
-                    "Please connect to the internet to continue")
+        } else {
+            connectionManagerDidEncounterError(
+                "No internet connection",
+                "Please connect to the internet to continue"
+            )
         }
     }
 
-    fun resetAuthKey(){
-        if(isNetworkAvailable()) {
+    fun resetAuthKey() {
+        if (isNetworkAvailable()) {
             showAuthCodeAlert(AUTH_PROMPT_TITLE, AUTH_PROMPT_MESSAGE)
-        }
-        else {
-            connectionManagerDidEncounterError("No internet connection",
-                    "Please connect to the internet to continue")
+        } else {
+            connectionManagerDidEncounterError(
+                "No internet connection",
+                "Please connect to the internet to continue"
+            )
         }
 
     }
 
     private fun isNetworkAvailable(): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager?
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager?
         val activeNetworkInfo = connectivityManager!!.activeNetworkInfo
         return activeNetworkInfo != null && activeNetworkInfo.isConnected
     }
@@ -109,16 +119,18 @@ class PosManager(private val context: Context) : ConnectionManagerActionsInterfa
         val input = EditText(context)
         input.hint = AUTH_PROMPT_PLACEHOLDER
         val lp = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT)
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.MATCH_PARENT
+        )
         input.layoutParams = lp
         builder.setView(input)
-        builder.setPositiveButton(AUTH_PROMPT_OK_BUTTON_TITLE
+        builder.setPositiveButton(
+            AUTH_PROMPT_OK_BUTTON_TITLE
         ) { _, _ ->
-            if(input.text.toString().trim() != "")
-                sharedPreference.save(AUTHORIZATION_CODE_KEY,input.text.toString())
+            if (input.text.toString().trim() != "")
+                sharedPreference.save(AUTHORIZATION_CODE_KEY, input.text.toString())
         }
-        builder.setNegativeButton("Cancel") {_,_ ->
+        builder.setNegativeButton("Cancel") { _, _ ->
             return@setNegativeButton
         }
         builder.show()
@@ -127,10 +139,11 @@ class PosManager(private val context: Context) : ConnectionManagerActionsInterfa
     private fun resetPosState() {
         virtualBeaconManager.stopTransmitting()
         digitalOrder = JSONObject()
-        if(popUpDialog?.isShowing!!) {
+        if (popUpDialog?.isShowing!!) {
             popUpDialog?.dismiss()
         }
     }
+
     override fun cancelButtonPressed() {
         resetPosState()
     }
@@ -140,7 +153,7 @@ class PosManager(private val context: Context) : ConnectionManagerActionsInterfa
         builder.setMessage(message)
         builder.setTitle(title)
         builder.setNeutralButton(
-                AUTH_PROMPT_OK_BUTTON_TITLE
+            AUTH_PROMPT_OK_BUTTON_TITLE
         ) { _, _ ->
             return@setNeutralButton
         }
@@ -176,14 +189,17 @@ class PosManager(private val context: Context) : ConnectionManagerActionsInterfa
 
     override fun receiptDelivered() {
         virtualBeaconManager.stopTransmitting()
-        ( context as Activity).runOnUiThread {
-            timer = object: CountDownTimer(10000,1000) {
+        (context as Activity).runOnUiThread {
+            timer = object : CountDownTimer(10000, 1000) {
                 override fun onTick(millisUntilFinished: Long) {
-                    popUpDialog?.findViewById<LottieAnimationView>(R.id.lottieAnimationView)?.setAnimation("success-animation.json")
-                    popUpDialog?.findViewById<LottieAnimationView>(R.id.lottieAnimationView)?.repeatCount = 1
-                    val x = millisUntilFinished/1000
+                    popUpDialog?.findViewById<LottieAnimationView>(R.id.lottieAnimationView)
+                        ?.setAnimation("success-animation.json")
+                    popUpDialog?.findViewById<LottieAnimationView>(R.id.lottieAnimationView)
+                        ?.repeatCount = 1
+                    val x = millisUntilFinished / 1000
                     popUpDialog?.findViewById<TextView>(R.id.textView2)?.visibility = GONE
-                    popUpDialog?.findViewById<Button>(R.id.cancel)?.text = context.getString(R.string.next_sale_in, x)
+                    popUpDialog?.findViewById<Button>(R.id.cancel)?.text =
+                        context.getString(R.string.next_sale_in, x)
                 }
 
                 override fun onFinish() {
@@ -193,6 +209,7 @@ class PosManager(private val context: Context) : ConnectionManagerActionsInterfa
             timer?.start()
         }
     }
+
     override fun webSocketDidConnect() {
     }
 
@@ -205,7 +222,7 @@ class PosManager(private val context: Context) : ConnectionManagerActionsInterfa
         builder.setMessage(message)
         builder.setTitle(title)
         builder.setNeutralButton(
-                AUTH_PROMPT_OK_BUTTON_TITLE
+            AUTH_PROMPT_OK_BUTTON_TITLE
         ) { _, _ ->
             return@setNeutralButton
         }
@@ -222,7 +239,7 @@ class PosManager(private val context: Context) : ConnectionManagerActionsInterfa
             builder.setMessage("Please Check Your Key And Re-enter It Carefully")
             builder.setTitle("Your Key Is Wrong!")
             builder.setNeutralButton(
-                    AUTH_PROMPT_OK_BUTTON_TITLE
+                AUTH_PROMPT_OK_BUTTON_TITLE
             ) { _, _ ->
                 return@setNeutralButton
             }
@@ -235,7 +252,7 @@ class PosManager(private val context: Context) : ConnectionManagerActionsInterfa
         builder.setMessage("Please send the order again")
         builder.setTitle("Something went wrong")
         builder.setNeutralButton(
-                AUTH_PROMPT_OK_BUTTON_TITLE
+            AUTH_PROMPT_OK_BUTTON_TITLE
         ) { _, _ ->
             return@setNeutralButton
         }
@@ -245,7 +262,6 @@ class PosManager(private val context: Context) : ConnectionManagerActionsInterfa
     override fun webSocketDidTimeOut() {
         resetPosState()
     }
-
 
 
 }

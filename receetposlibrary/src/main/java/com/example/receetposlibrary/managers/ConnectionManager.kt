@@ -14,6 +14,7 @@ import com.example.receetposlibrary.GlobalKeys.Companion.UserDefaultsKeys.AUTHOR
 import com.example.receetposlibrary.GlobalKeys.Companion.UserDefaultsKeys.BEACON_ID_KEY_USER_DEFAULTS
 import com.example.receetposlibrary.GlobalKeys.Companion.UserDefaultsKeys.POS_ID_KEY_USER_DEFAULTS
 import com.example.receetposlibrary.GlobalKeys.Companion.WebService.DEVELOPMENT_WEB_SOCKET_URL
+import com.example.receetposlibrary.GlobalKeys.Companion.WebService.PRODUCTION_WEB_SOCKET_URL
 import com.example.receetposlibrary.SharedPreference
 import com.example.receetposlibrary.interfaces.ConnectionManagerActionsInterface
 import com.example.receetposlibrary.SingletonHolder
