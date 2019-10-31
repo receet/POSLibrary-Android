@@ -5,6 +5,16 @@ ReceetPOSAddOn is an easy to integrate with add-on which can be installed on any
 ## Installation
 
 ### Quickstart
+Add dependency in your root build.gradle at the end of repositories:
+```
+allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+ ```
+ 
 Add Gradle dependency into your app's build.config
 ```
  dependencies {
