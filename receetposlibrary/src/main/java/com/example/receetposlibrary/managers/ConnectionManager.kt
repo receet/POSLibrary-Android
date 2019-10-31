@@ -46,7 +46,7 @@ class ConnectionManager(context: Context): WebSocketListener() {
         val client = OkHttpClient.Builder()
             .build()
         val request = Request.Builder()
-            .url(DEVELOPMENT_WEB_SOCKET_URL)
+            .url(PRODUCTION_WEB_SOCKET_URL)
             .build()
         val wsListener = this
         socket = client.newWebSocket(request, wsListener)
