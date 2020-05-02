@@ -1,7 +1,7 @@
 package com.example.receetposlibrary.interfaces
 
 interface ConnectionManagerActionsInterface {
-    fun orderDeliveredSuccessfully(orderID:Int,receiptID:Int)
+    fun orderDeliveredSuccessfully(orderID:Int,receiptID:Int, genericReceiptID: String)
     fun orderNotDelivered()
     fun receiptDelivered()
     fun webSocketDidConnect()

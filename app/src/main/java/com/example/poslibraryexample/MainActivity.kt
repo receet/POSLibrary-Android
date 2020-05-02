@@ -1,6 +1,7 @@
 package com.example.poslibraryexample
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.example.receetposlibrary.managers.PosManager
@@ -28,8 +29,10 @@ import java.util.*
         override fun onClick(v: View?) {
             when (v?.id) {
                 R.id.sendOrder -> {
-                    posManager.createOrder(createOrder())
-                }
+                    posManager.createOrder(createOrder(),callback = {qrCode ->
+                        //handle the QR code here
+                        Log.d("qrCodeValue",qrCode.toString())
+                    })                }
                 R.id.resetAuthKey -> {
                     posManager.resetAuthKey()
                 }

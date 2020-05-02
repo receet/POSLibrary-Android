@@ -3,18 +3,9 @@ package com.example.receetposlibrary.managers
 import android.content.Context
 import android.util.Log
 import com.example.receetposlibrary.GlobalKeys
-import com.example.receetposlibrary.GlobalKeys.Companion.ParameterKeys.BEACON_ID_KEY
-import com.example.receetposlibrary.GlobalKeys.Companion.ParameterKeys.ORDER_DETAILS_KEY
-import com.example.receetposlibrary.GlobalKeys.Companion.ParameterKeys.ORDER_ID_KEY
-import com.example.receetposlibrary.GlobalKeys.Companion.ParameterKeys.POS_ID_KEY
-import com.example.receetposlibrary.GlobalKeys.Companion.ParameterKeys.RECEIPT_ID_KEY
-import com.example.receetposlibrary.GlobalKeys.Companion.ParameterKeys.WEB_SOCKET_ACCESS_TOKEN_KEY
-import com.example.receetposlibrary.GlobalKeys.Companion.ParameterKeys.WEB_SOCKET_ACTION_KEY
-import com.example.receetposlibrary.GlobalKeys.Companion.UserDefaultsKeys.AUTHORIZATION_CODE_KEY
-import com.example.receetposlibrary.GlobalKeys.Companion.UserDefaultsKeys.BEACON_ID_KEY_USER_DEFAULTS
-import com.example.receetposlibrary.GlobalKeys.Companion.UserDefaultsKeys.POS_ID_KEY_USER_DEFAULTS
-import com.example.receetposlibrary.GlobalKeys.Companion.WebService.DEVELOPMENT_WEB_SOCKET_URL
-import com.example.receetposlibrary.GlobalKeys.Companion.WebService.PRODUCTION_WEB_SOCKET_URL
+import com.example.receetposlibrary.GlobalKeys.Companion.ParameterKeys
+import com.example.receetposlibrary.GlobalKeys.Companion.UserDefaultsKeys
+import com.example.receetposlibrary.GlobalKeys.Companion.WebService
 import com.example.receetposlibrary.SharedPreference
 import com.example.receetposlibrary.interfaces.ConnectionManagerActionsInterface
 import com.example.receetposlibrary.SingletonHolder
@@ -32,8 +23,8 @@ class ConnectionManager(context: Context): WebSocketListener() {
     companion object : SingletonHolder<ConnectionManager, Context>(::ConnectionManager)
 
 
-        private var socket: WebSocket? = null
-        private val normalClosureStatus = 1000
+    private var socket: WebSocket? = null
+    private val normalClosureStatus = 1000
     private lateinit var connectionManagerActionsInterface : ConnectionManagerActionsInterface
 
     private val sharedPreference: SharedPreference = SharedPreference(context)
@@ -46,18 +37,18 @@ class ConnectionManager(context: Context): WebSocketListener() {
         val client = OkHttpClient.Builder()
             .build()
         val request = Request.Builder()
-            .url(DEVELOPMENT_WEB_SOCKET_URL)
+            .url(WebService.DEVELOPMENT_WEB_SOCKET_URL)
             .build()
         val wsListener = this
         socket = client.newWebSocket(request, wsListener)
     }
 
     fun sendOrderToCloud(order: JSONObject) {
-        val orderDetails = order[ORDER_DETAILS_KEY] as? JSONObject
+        val orderDetails = order[ParameterKeys.ORDER_DETAILS_KEY] as? JSONObject
         val outputFormatter = SimpleDateFormat(dateFormat, Locale.getDefault())
         val outputStringDate = outputFormatter.format(orderDetails?.opt("timePlaced"))
         orderDetails?.put("timePlaced",outputStringDate)
-        orderDetails?.put(POS_ID_KEY, sharedPreference.getValueString(POS_ID_KEY_USER_DEFAULTS))
+        orderDetails?.put(ParameterKeys.POS_ID_KEY, sharedPreference.getValueString(UserDefaultsKeys.POS_ID_KEY_USER_DEFAULTS))
         order.put("order", orderDetails)
         socket?.send(order.toString())
         Log.d("lolo",order.toString())
@@ -71,11 +62,11 @@ class ConnectionManager(context: Context): WebSocketListener() {
     override fun onMessage(webSocket: WebSocket?, text: String?) {
         Log.d("Receiving : ", text!!)
         val receivedJSONObject = JSONObject(text)
-        when (receivedJSONObject.optInt(WEB_SOCKET_ACTION_KEY)) {
+        when (receivedJSONObject.optInt(ParameterKeys.WEB_SOCKET_ACTION_KEY)) {
             AuthorizationRequired.code -> {
                 val jsonObject = JSONObject()
-                jsonObject.put(WEB_SOCKET_ACTION_KEY, SendAuthorizationToken.code)
-                jsonObject.put(WEB_SOCKET_ACCESS_TOKEN_KEY, sharedPreference.getValueString(AUTHORIZATION_CODE_KEY))
+                jsonObject.put(ParameterKeys.WEB_SOCKET_ACTION_KEY, SendAuthorizationToken.code)
+                jsonObject.put(ParameterKeys.WEB_SOCKET_ACCESS_TOKEN_KEY, sharedPreference.getValueString(UserDefaultsKeys.AUTHORIZATION_CODE_KEY))
                 webSocket?.send(jsonObject.toString())
             }
             ReceiptDelivered.code  -> {
@@ -83,16 +74,16 @@ class ConnectionManager(context: Context): WebSocketListener() {
                 webSocket?.close(normalClosureStatus,"finished")
             }
             OrderCreatedSuccessfully.code -> {
-                connectionManagerActionsInterface.orderDeliveredSuccessfully(receivedJSONObject.optInt(ORDER_ID_KEY), receivedJSONObject.optInt(RECEIPT_ID_KEY))
+                connectionManagerActionsInterface.orderDeliveredSuccessfully(receivedJSONObject.optInt(ParameterKeys.ORDER_ID_KEY), receivedJSONObject.optInt(ParameterKeys.RECEIPT_ID_KEY), receivedJSONObject.optString("genericReceiptId"))
             }
             AuthorizationSuccessful.code -> {
-                sharedPreference.save(BEACON_ID_KEY_USER_DEFAULTS, receivedJSONObject.optString(BEACON_ID_KEY))
-                sharedPreference.save(POS_ID_KEY_USER_DEFAULTS, receivedJSONObject.optString(POS_ID_KEY))
+                sharedPreference.save(UserDefaultsKeys.BEACON_ID_KEY_USER_DEFAULTS, receivedJSONObject.optString(ParameterKeys.BEACON_ID_KEY))
+                sharedPreference.save(UserDefaultsKeys.POS_ID_KEY_USER_DEFAULTS, receivedJSONObject.optString(ParameterKeys.POS_ID_KEY))
                 connectionManagerActionsInterface.webSocketDidAuthorize()
             }
             AuthorizationFailed.code -> {
                 connectionManagerActionsInterface.webSocketAuthorizeFailed()
-                 webSocket?.close(normalClosureStatus,"finished")
+                webSocket?.close(normalClosureStatus,"finished")
             }
             UnkownAction.code  -> TODO()
             TimeOut.code  -> {
