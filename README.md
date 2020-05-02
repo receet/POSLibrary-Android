@@ -18,7 +18,7 @@ allprojects {
 Add Gradle dependency into your app's build.config
 ```
  dependencies {
-  implementation 'com.github.receet:POSLibrary-Android:{latest_version}'
+  implementation 'com.github.receet:POSLibrary-Android:1.0.1'
 }
 ```
 ## Getting Started
@@ -26,6 +26,8 @@ Add Gradle dependency into your app's build.config
 
 ```kotlin
  private lateinit var posManager: PosManager
+ // and then initialize it 
+    posManager = PosManager.getInstance(this)// this is the activity accessing the manager
 ``` 
 2- You can turn on or turn off the integration by calling the following methods
 
@@ -139,7 +141,10 @@ To send a digital receipt you prepare the purchase order as the following format
 4- you send this dictionary to the Receet Point of Sale manager 
 
 ```kotlin
- posManager.createOrder(order)// send the digital order To Receet POS
+ posManager.createOrder(createOrder(),callback = {qrCode ->
+        //handle the QR code here
+ 	Log.d("qrCodeValue",qrCode.toString())
+ })
 ```
 
 
