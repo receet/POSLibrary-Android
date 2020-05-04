@@ -15,7 +15,7 @@ allprojects {
 	}
  ```
  
-Add Gradle dependency into your app's build.config
+Add Gradle dependency into your app's build.gradle
 ```
  dependencies {
   implementation 'com.github.receet:POSLibrary-Android:1.1.1'
